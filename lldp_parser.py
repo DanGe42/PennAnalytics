@@ -48,7 +48,12 @@ class SwitchSnmpInfo(object):
         else:
             raise ValueError('Invalid type %s' % typ)
 
-    def set_remote_data(self, key, port, typ, value):
+    def set_remote_data(self, port, key, typ, value):
+        if key in self._remote_system_data[port]:
+            print('WARN: Key "%s" already exists with port %d' % (key, port),
+                  file=sys.stderr)
+            print(self.sys_name, file=sys.stderr)
+
         if typ == INTEGER_TYPE:
             value = int(value)
         elif typ == STRING_TYPE:
@@ -119,8 +124,8 @@ def _process_remote_data(switch, subfield, typ, value):
             # Add 1 to cut off leading period
             metadata = subfield[len(config_name) + 1:]
 
-            port = metadata.split('.')[1]
-            switch.set_remote_data(readable_name, port, typ, value)
+            port = int(metadata.split('.')[1])
+            switch.set_remote_data(port, readable_name, typ, value)
             return
 
 
