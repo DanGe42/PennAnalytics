@@ -126,7 +126,7 @@ class SwitchSnmpInfo(object):
             'sys_name': 'router.example.org',
             'chassis_id': '01:23:45:AB:CD:EF',
             'remote_system_data': {
-                '34': {
+                '34.3': {
                     'lldpRemSysName': {
                         'type': 'STRING',
                         'value': 'router2.example.org'
