@@ -193,7 +193,8 @@ def _process_remote_data(switch, subfield, typ, value):
             # Add 1 to cut off leading period
             metadata = subfield[len(config_name) + 1:]
 
-            port = int(metadata.split('.')[1])
+            # Cut off the first '.0.'
+            port = metadata[metadata.index('.', 1) + 1:]
             switch.set_remote_data(port, readable_name, typ, value)
             return
 
