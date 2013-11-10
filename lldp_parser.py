@@ -66,6 +66,20 @@ class SwitchSnmpInfo(object):
             raise ValueError('Port %d not found in remote system data' % port)
         return self._remote_system_data[port][key]
 
+    def get_remote_ports(self):
+        return self._remote_system_data.keys()
+
+    def get_remote_systems(self):
+        return self._remote_system_data.values()
+
+    def get_remote_system_names(self):
+        remote_systems = []
+        for _, remote_data in self._remote_system_data.iteritems():
+            if 'lldpRemSysName' in remote_data:
+                _, remote_sys_name = remote_data['lldpRemSysName']
+                remote_systems.append(remote_sys_name)
+        return remote_systems
+
     def __str__(self):
         return '%s (%s) => %s' % \
             (self.sys_name, self.chassis_id, self._remote_system_data)
@@ -90,7 +104,7 @@ class SwitchSnmpInfo(object):
         return info_dict
 
 
-def parse_file(filename):
+def parse_snmp_file(filename):
     switches = []
     with open(filename, 'r') as f:
         # If this parser crashes with a NoneType error, then we can't assume
@@ -134,5 +148,5 @@ if __name__ == '__main__':
         print("Usage: %s file" % sys.argv[0])
         sys.exit(1)
 
-    switches = parse_file(sys.argv[1])
+    switches = parse_snmp_file(sys.argv[1])
     print(json.dumps([switch.as_dict() for switch in switches]))
