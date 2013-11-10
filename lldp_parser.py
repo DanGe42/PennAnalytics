@@ -35,18 +35,31 @@ INTEGER_TYPE = 'INTEGER'
 
 
 class SwitchSnmpInfo(object):
+    """ An object that represents SNMP information from a switch. This object
+    collects system name (i.e. hostname), MAC address, and information about
+    neighboring nodes for a particular switch.
+    """
 
     def __init__(self, sys_name):
+        """ Creates a new switch information object with only the hostname. """
         self.sys_name = sys_name.strip('"')
         self._chassis_id = None
         self._remote_system_data = defaultdict(dict)
 
     @property
     def chassis_id(self):
+        """ Returns the chassis ID (i.e. MAC address) of this switch. """
         return self._chassis_id
 
     @chassis_id.setter
     def chassis_id(self, type_value_tuple):
+        """ Sets the chassis ID (i.e. MAC address) of this switch. Since
+        this data can come in either a hex string or a plain string, we convert
+        the hex string to the string format to make the data uniform.
+
+        For example, if a MAC is "00 00 00 00 00 00", but is a hex string, it
+        will automatically be converted to "00:00:00:00:00:00".
+        """
         typ, value = type_value_tuple
         if typ == HEX_STRING_TYPE:
             self._chassis_id = value.replace(' ', ':')
@@ -56,11 +69,15 @@ class SwitchSnmpInfo(object):
             raise ValueError('Invalid type %s' % typ)
 
     def set_remote_data(self, port, key, typ, value):
+        """ Given the physical port number, set the remote system's information
+        field to a value of a given type.
+        """
         if key in self._remote_system_data[port]:
             print('WARN: Key "%s" already exists with port %d' % (key, port),
                   file=sys.stderr)
             print(self.sys_name, file=sys.stderr)
 
+        # Clean up some types
         if typ == INTEGER_TYPE:
             value = int(value)
         elif typ == STRING_TYPE:
@@ -69,17 +86,25 @@ class SwitchSnmpInfo(object):
         self._remote_system_data[port][key] = (typ, value)
 
     def get_remote_data(self, port, key):
+        """ Retrieves a dictionary corresponding to the remote system attached
+        to the specified physical port.
+        """
         if port not in self._remote_system_data:
             raise ValueError('Port %d not found in remote system data' % port)
         return self._remote_system_data[port][key]
 
     def get_remote_ports(self):
+        """ Retrieves all physical ports. """
         return self._remote_system_data.keys()
 
     def get_remote_systems(self):
+        """ Retrieves data for all remote systems connected to this switch. """
         return self._remote_system_data.values()
 
     def get_remote_system_names(self):
+        """ Retrieves the names of all systems connected to this switch and
+        returns this as a list.
+        """
         remote_systems = []
         for _, remote_data in self._remote_system_data.iteritems():
             if 'lldpRemSysName' in remote_data:
@@ -92,6 +117,26 @@ class SwitchSnmpInfo(object):
             (self.sys_name, self.chassis_id, self._remote_system_data)
 
     def as_dict(self):
+        """ Returns a dictionary representation of this information object.
+        This is useful for dumping as JSON.
+
+        For example, this method might return data as the following:
+
+        {
+            'sys_name': 'router.example.org',
+            'chassis_id': '01:23:45:AB:CD:EF',
+            'remote_system_data': {
+                '34': {
+                    'lldpRemSysName': {
+                        'type': 'STRING',
+                        'value': 'router2.example.org'
+                    },
+                    ...
+                },
+                ...
+            }
+        }
+        """
         info_dict = {
             'sys_name': self.sys_name,
             'chassis_id': self.chassis_id,
@@ -112,6 +157,7 @@ class SwitchSnmpInfo(object):
 
 
 def parse_snmp_file(filename):
+    """ Parse a SNMP data dump containing LLDP data. """
     switches = []
     with open(filename, 'r') as f:
         # If this parser crashes with a NoneType error, then we can't assume
@@ -124,6 +170,7 @@ def parse_snmp_file(filename):
 
             field_id, typ, value = match_data.groups()
             if field_id.startswith(MIB_FIELDS['lldpLocSysName']):
+                # Create a new switch if we see the switch's hostname
                 switch = SwitchSnmpInfo(value)
                 switches.append(switch)
             elif field_id.startswith(MIB_FIELDS['lldpLocChassisId']):
@@ -140,6 +187,7 @@ def parse_snmp_file(filename):
 
 
 def _process_remote_data(switch, subfield, typ, value):
+    """ Helper for parsing LLDP remote system data. """
     for readable_name, config_name in REMOTE_FIELDS.iteritems():
         if subfield.startswith(config_name):
             # Add 1 to cut off leading period
