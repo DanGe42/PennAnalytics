@@ -9,19 +9,26 @@ import re
 import sys
 
 
+# Base fields from the LLDP Management Information Base
 MIB_FIELDS = {
     'lldpLocSysName':        'iso.0.8802.1.1.2.1.3.3',
     'lldpLocChassisId':      'iso.0.8802.1.1.2.1.3.2',
     'lldpRemoteSystemsData': 'iso.0.8802.1.1.2.1.4',
 }
 
+# Specific fields in the lldpRemoteSystemsData configuration data
+# The full field name is
+# MIB_FIELDS['lldpRemoteSystemsData'] + '.' + REMOTE_FIELDS[...]
 REMOTE_FIELDS = {
     'lldpRemPortID':   '1.1.7',
     'lldpRemPortDesc': '1.1.8',
     'lldpRemSysName':  '1.1.9',
 }
 
+# RegExp pattern for matching each SNMP line
 ATTR_VALUE_PATTERN = re.compile(r'(.+) = (.+?): (.+)')
+
+# LLDP data types
 HEX_STRING_TYPE = 'Hex-STRING'
 STRING_TYPE = 'STRING'
 INTEGER_TYPE = 'INTEGER'
