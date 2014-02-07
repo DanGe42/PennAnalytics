@@ -36,13 +36,13 @@ class NetworkNode(dict):
         return self._sys_name
 
     def total_bytes_recv(self):
-        return sum(stats.bytes_recv for _, stats in self.itervalues())
+        return sum(link.stats.bytes_recv for link in self.itervalues())
 
     def total_bytes_sent(self):
-        return sum(stats.bytes_sent for _, stats in self.itervalues())
+        return sum(link.stats.bytes_sent for link in self.itervalues())
 
     def total_bytes_transferred(self):
-        return sum(stats.bytes_transferred for _, stats in self.itervalues())
+        return sum(link.stats.bytes_transferred for link in self.itervalues())
 
     def add_remote(self, port, remote_sys_name, capacity, stats=None):
         self[port] = NetworkLink(
