@@ -18,6 +18,13 @@ class NetworkStats(object):
     def bytes_transferred(self):
         return self.bytes_recv + self.bytes_sent
 
+    def __repr__(self):
+        return "NetworkStats(bytes_recv=%d, bytes_sent=%d)" % \
+               (self.bytes_recv, self.bytes_sent)
+
+    def __str__(self):
+        return repr(self)
+
 
 class NetworkNode(dict):
     """ Represents information about a node (i.e. router, switch) on a network. """
@@ -56,3 +63,6 @@ class NetworkNode(dict):
 
     def iterports(self):
         return self.iterkeys()
+
+    def __str__(self):
+        return "NetworkNode('%s', %s)" % (self.sys_name, super(NetworkNode, self).__str__())
