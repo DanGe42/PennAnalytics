@@ -3,9 +3,11 @@ PennAnalytics SNMP Fetcher
 
 Setup
 -----
+If you do not have `pip` installed, run `[sudo] easy_install pip`.
+
 Full setup instructions:
 
-    $ pip install virtualenv
+    $ [sudo] pip install virtualenv
     $ cd path/to/this/repo
     $ virtualenv .
     $ source bin/activate
