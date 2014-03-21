@@ -3,10 +3,10 @@ walk:
     - "IF-MIB::ifInOctets"
     - "IF-MIB::ifOutOctets"
     - "IF-MIB::ifSpeed"
-
-get:
     - "LLDP-MIB::lldpRemPortId"
     - "LLDP-MIB::lldpRemPortDesc"
     - "LLDP-MIB::lldpRemSysName"
+
+get:
     - "LLDP-MIB::lldpLocSysName.0"
     - "LLDP-MIB::lldpLocChassisId.0"
