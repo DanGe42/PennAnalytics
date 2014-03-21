@@ -7,7 +7,6 @@ import sys
 import threading
 
 from common import NetworkNode
-from common import NetworkStats
 from config import snmp_get_vars
 from config import snmp_walk_vars
 from snmp_oids import IF_MIB
@@ -100,11 +99,12 @@ def parse_output(snmpwalk_output, snmpget_output):
     for port in remote_sys_names:
         rem_sys_name = remote_sys_names.get(port, None)
         capacity = link_speed.get(port, -1)
-        stats = NetworkStats(
-            bytes_recv=link_bytes_recv.get(port, 0),
-            bytes_sent=link_bytes_sent.get(port, 0),
-        )
-        node.add_remote(port, rem_sys_name, capacity, stats=stats)
+        node.add_remote(port, rem_sys_name, capacity)
+
+        bytes_recv = link_bytes_recv.get(port, 0)
+        bytes_sent = link_bytes_sent.get(port, 0)
+        link = node[port]
+        link.update(bytes_recv, bytes_sent)
 
     return node
 

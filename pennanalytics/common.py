@@ -29,7 +29,7 @@ class NetworkLink(object):
         return self.bytes_recv_hist[0] + self.bytes_sent_hist[0]
 
     def __repr__(self):
-        return "NetworkLink(remote_sys_name=%s, capacity=%d, bytes_recv=%d, bytes_sent=%d)" % (self.remote_sys_name, self.capacity, self.stats, self.bytes_recv, self.bytes_sent)
+        return "NetworkLink(remote_sys_name=%s, capacity=%d, bytes_recv=%d, bytes_sent=%d)" % (self.remote_sys_name, self.capacity, self.bytes_recv, self.bytes_sent)
 
     def bytes_recv_delta(self):
         return self.bytes_recv_hist[0] - self.bytes_recv_hist[1]
