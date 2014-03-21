@@ -1,0 +1,6 @@
+hosts:
+    - hostname: medea.stwing.upenn.edu
+      community: public
+
+    - hostname: darkangel.stwing.upenn.edu
+      community: public

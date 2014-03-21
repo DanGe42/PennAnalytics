@@ -7,26 +7,10 @@ import sys
 
 from common import NetworkNode
 from common import NetworkStats
+from config import snmp_get_vars
+from config import snmp_walk_vars
 from snmp_oids import IF_MIB
 from snmp_oids import LLDP_MIB
-
-
-# SNMP variables for the snmpwalk command
-snmp_walk_variables = [
-    IF_MIB.ifInOctets,
-    IF_MIB.ifOutOctets,
-    IF_MIB.ifSpeed,
-    LLDP_MIB.lldpRemPortId,
-    LLDP_MIB.lldpRemPortDesc,
-    LLDP_MIB.lldpRemSysName,
-]
-
-# SNMP variables for the snmpget command
-snmp_get_variables = [
-    LLDP_MIB.lldpLocSysName_0,
-    LLDP_MIB.lldpLocChassisId_0,
-]
-
 
 OID_VALUE_PATTERN = re.compile(r'(.+) = (.+?):\s*(.+)?')
 LLDP_OID_SPLIT = re.compile(r'([a-zA-Z0-9:\-]+)\.\d+\.(\d+)\.\d+')
@@ -137,7 +121,7 @@ def query(hosts, mib_directory):
         community = host['community']
 
         snmpwalk_output = ''
-        for var in snmp_walk_variables:
+        for var in snmp_walk_vars:
             try:
                 snmpwalk_output += subprocess.check_output([
                     'snmpwalk',
@@ -156,7 +140,7 @@ def query(hosts, mib_directory):
             '-c', community,
             '-m', mib_directory + "/LLDP-MIB.my",
             hostname,
-        ] + snmp_get_variables)
+        ] + snmp_get_vars)
 
         node = parse_output(snmpwalk_output, snmpget_output)
         nodes.append(node)
