@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import jsonify
+from flask import Response
 import os
 
 import config
@@ -10,8 +10,9 @@ MIB_DIRECTORY = os.environ.get('MIB_DIRECTORY')
 
 @app.route("/all")
 def fetch_all_data():
-    nodes = snmp_fetch.query_threaded(config.hosts, MIB_DIRECTORY)
-    return jsonify(results=[node.serialize() for node in nodes])
+    with open("output.json", 'r') as f:
+        data = f.read()
+    return Response(data, mimetype="application/json")
 
 
 if __name__ == '__main__':
