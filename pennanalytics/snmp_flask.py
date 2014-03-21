@@ -10,7 +10,7 @@ MIB_DIRECTORY = os.environ.get('MIB_DIRECTORY')
 
 @app.route("/all")
 def fetch_all_data():
-    nodes = snmp_fetch.query(config.hosts, MIB_DIRECTORY)
+    nodes = snmp_fetch.query_threaded(config.hosts, MIB_DIRECTORY)
     return jsonify(results=[node.serialize() for node in nodes])
 
 

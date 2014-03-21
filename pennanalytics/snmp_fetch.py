@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+import threading
 
 from common import NetworkNode
 from common import NetworkStats
@@ -108,6 +109,35 @@ def parse_output(snmpwalk_output, snmpget_output):
     return node
 
 
+def _fetch_node_info(host, mib_directory):
+    hostname = host['hostname']
+    community = host['community']
+
+    snmpwalk_output = ''
+    for var in snmp_walk_vars:
+        try:
+            snmpwalk_output += subprocess.check_output([
+                'snmpwalk',
+                '-v2c',
+                '-c', community,
+                '-m', mib_directory + "/LLDP-MIB.my",
+                hostname,
+                var,
+            ])
+        except subprocess.CalledProcessError as e:
+            print(e.message, file=sys.stderr)
+
+    snmpget_output = subprocess.check_output([
+        'snmpget',
+        '-v2c',
+        '-c', community,
+        '-m', mib_directory + "/LLDP-MIB.my",
+        hostname,
+    ] + snmp_get_vars)
+
+    return parse_output(snmpwalk_output, snmpget_output)
+
+
 def query(hosts, mib_directory):
     """ Query a list of hosts to obtain SNMP information from them.
 
@@ -117,33 +147,33 @@ def query(hosts, mib_directory):
     """
     nodes = []
     for host in hosts:
-        hostname = host['hostname']
-        community = host['community']
+        nodes.append(_fetch_node_info(host, mib_directory))
 
-        snmpwalk_output = ''
-        for var in snmp_walk_vars:
-            try:
-                snmpwalk_output += subprocess.check_output([
-                    'snmpwalk',
-                    '-v2c',
-                    '-c', community,
-                    '-m', mib_directory + "/LLDP-MIB.my",
-                    hostname,
-                    var,
-                ])
-            except subprocess.CalledProcessError as e:
-                print(e.message, file=sys.stderr)
+    return nodes
 
-        snmpget_output = subprocess.check_output([
-            'snmpget',
-            '-v2c',
-            '-c', community,
-            '-m', mib_directory + "/LLDP-MIB.my",
-            hostname,
-        ] + snmp_get_vars)
 
-        node = parse_output(snmpwalk_output, snmpget_output)
-        nodes.append(node)
+_nodelist_lock = threading.Lock()
+
+class SnmpTask(threading.Thread):
+
+    def __init__(self, host, mib_directory, nodelist):
+        super(SnmpTask, self).__init__()
+        self.host = host
+        self.mib_directory = mib_directory
+        self.nodelist = nodelist
+
+    def run(self):
+        node = _fetch_node_info(self.host, self.mib_directory)
+        with _nodelist_lock:
+            self.nodelist.append(node)
+
+def query_threaded(hosts, mib_directory):
+    nodes = []
+    threads = [SnmpTask(host, mib_directory, nodes) for host in hosts]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
 
     return nodes
 
