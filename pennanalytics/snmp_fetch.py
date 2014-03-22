@@ -53,6 +53,7 @@ def parse_output(snmpwalk_output, snmpget_output):
     :return: A NetworkNode object
     """
     sys_name = None
+    physical_addr = None
 
     # Parse the snmpget output
     for line in snmpget_output.split('\n'):
@@ -63,8 +64,10 @@ def parse_output(snmpwalk_output, snmpget_output):
 
         if oid == LLDP_MIB.lldpLocSysName_0:
             sys_name = value
+        if oid == LLDP_MIB.lldpLocChassisId_0:
+            physical_addr = value
 
-    node = NetworkNode(sys_name)
+    node = NetworkNode(sys_name, physical_addr)
 
     remote_sys_names = {}
     link_bytes_recv = {}
@@ -138,44 +141,39 @@ def _fetch_node_info(host, mib_directory):
     return parse_output(snmpwalk_output, snmpget_output)
 
 
-def query(hosts, mib_directory):
-    """ Query a list of hosts to obtain SNMP information from them.
-
-    :param hosts: A list of hosts to query
-    :param mib_directory: The directory containing the MIBs for interpreting SNMP output
-    :return: A list of NetworkNodes
-    """
-    nodes = []
-    for host in hosts:
-        nodes.append(_fetch_node_info(host, mib_directory))
-
-    return nodes
-
-
-_nodelist_lock = threading.Lock()
-
 class SnmpTask(threading.Thread):
 
-    def __init__(self, host, mib_directory, nodelist):
+    _nodelist_lock = threading.Lock()
+
+    def __init__(self, host, mib_directory, node_dict):
         super(SnmpTask, self).__init__()
         self.host = host
         self.mib_directory = mib_directory
-        self.nodelist = nodelist
+        self.node_dict = node_dict
 
     def run(self):
         node = _fetch_node_info(self.host, self.mib_directory)
-        with _nodelist_lock:
-            self.nodelist.append(node)
+        with self.__class__._nodelist_lock:
+            physical_addr = node.physical_addr
+            if physical_addr not in self.node_dict:
+                self.node_dict[physical_addr] = node
+            else:
+                for port, link in self.node_dict[physical_addr].iteritems():
+                    # TODO: what happens if port no longer exists
+                    if port in node:
+                        new_link = node[port]
+                        link.update(new_link.bytes_recv, new_link.bytes_sent)
 
-def query_threaded(hosts, mib_directory):
-    nodes = []
-    threads = [SnmpTask(host, mib_directory, nodes) for host in hosts]
+
+def query_threaded(hosts, mib_directory, node_dict=None):
+    node_dict = node_dict or {}
+    threads = [SnmpTask(host, mib_directory, node_dict) for host in hosts]
     for th in threads:
         th.start()
     for th in threads:
         th.join()
 
-    return nodes
+    return node_dict
 
 
 if __name__ == '__main__':

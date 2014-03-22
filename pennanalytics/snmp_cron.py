@@ -7,18 +7,22 @@ import time
 import config
 import snmp_fetch
 
-interval = 10
+interval = config.query_interval_seconds
 print("Starting SNMP interval task; interval set to %d seconds" % interval)
 filename = "output.json"
+tmp_filename = "output.json.1"
 print("Using output file %s." % filename)
 mib_directory = os.environ.get("MIB_DIRECTORY")
 print("MIB_DIRECTORY=%s" % mib_directory)
 
 
+nodes = {}
 while True:
-    with open(filename, 'w') as f:
-        nodes = snmp_fetch.query_threaded(config.hosts, mib_directory)
-        f.write(json.dumps([node.serialize() for node in nodes]))
-        print("Wrote to %s" % filename)
+    with open(tmp_filename, 'w') as f:
+        nodes = snmp_fetch.query_threaded(config.hosts, mib_directory, node_dict=nodes)
+        f.write(json.dumps([node.serialize() for node in nodes.itervalues()]))
+
+    os.rename(tmp_filename, filename)
+    print("Wrote to %s" % filename)
 
     time.sleep(interval)

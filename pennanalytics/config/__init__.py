@@ -2,6 +2,7 @@ import os
 
 import yaml
 
+query_interval_seconds = 8
 
 # Get the directory path of this file
 def _path_with_filename(filename):

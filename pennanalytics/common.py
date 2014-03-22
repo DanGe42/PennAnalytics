@@ -3,15 +3,18 @@
 # node: capacity, bytes received/sent since last tick
 
 import collections
+import config
 
 
 class NetworkLink(object):
 
+    MAX_QUEUE_LENGTH = 2
+
     def __init__(self, remote_sys_name, capacity, bytes_recv=0, bytes_sent=0):
         self.remote_sys_name = remote_sys_name
         self.capacity = capacity
-        self.bytes_recv_hist = collections.deque(maxlen=10)
-        self.bytes_sent_hist = collections.deque(maxlen=10)
+        self.bytes_recv_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
+        self.bytes_sent_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
         self.bytes_recv_hist.appendleft(bytes_recv)
         self.bytes_sent_hist.appendleft(bytes_sent)
         self.requests = 0
@@ -42,10 +45,10 @@ class NetworkLink(object):
 
     # TODO: remove time interval hard codes
     def input_utilization(self):
-        return float(self.bytes_recv_delta() * 8) / (8 * self.capacity)
+        return float(self.bytes_recv_delta() * 8) / (config.query_interval_seconds * self.capacity)
 
     def output_utilization(self):
-        return float(self.bytes_sent_delta() * 8) / (8 * self.capacity)
+        return float(self.bytes_sent_delta() * 8) / (config.query_interval_seconds * self.capacity)
 
     def update(self, bytes_recv, bytes_sent):
         self.requests += 1
@@ -74,19 +77,20 @@ class NetworkLink(object):
                 "total_bytes_sent": self.bytes_sent,
                 "bytes_recv_last_interval": self.bytes_recv_delta(),
                 "bytes_sent_last_interval": self.bytes_sent_delta(),
-                "bytes_recv_moving_average": self.input_util_avg,
-                "bytes_sent_moving_average": self.output_util_avg,
-                "upload_utilization": self.output_utilization(),
-                "download_utilization": self.input_utilization()
+                "bytes_recv_moving_average": "%.3f" % self.input_util_avg,
+                "bytes_sent_moving_average": "%.3f" % self.output_util_avg,
+                "upload_utilization": "%.3f" % self.output_utilization(),
+                "download_utilization": "%.3f" % self.input_utilization()
             }
         }
 
 
 class NetworkNode(dict):
 
-    def __init__(self, sys_name):
+    def __init__(self, sys_name, physical_addr):
         super(NetworkNode, self).__init__()
         self._sys_name = sys_name
+        self.physical_addr = physical_addr
 
     @property
     def sys_name(self):
