@@ -1,7 +1,9 @@
-# link: bytes received/sent since last tick, bytes received/sent % bandwidth since last tick, bytes receieved/sent % bandwidth cumulative average
+# link: bytes received/sent since last tick, bytes received/sent % bandwidth
+#   since last tick, bytes receieved/sent % bandwidth cumulative average
 # node: capacity, bytes received/sent since last tick
 
 import collections
+
 
 class NetworkLink(object):
 
@@ -29,7 +31,8 @@ class NetworkLink(object):
         return self.bytes_recv_hist[0] + self.bytes_sent_hist[0]
 
     def __repr__(self):
-        return "NetworkLink(remote_sys_name=%s, capacity=%d, bytes_recv=%d, bytes_sent=%d)" % (self.remote_sys_name, self.capacity, self.bytes_recv, self.bytes_sent)
+        return "NetworkLink(remote_sys_name=%s, capacity=%d, bytes_recv=%d, bytes_sent=%d)" % \
+               (self.remote_sys_name, self.capacity, self.bytes_recv, self.bytes_sent)
 
     def bytes_recv_delta(self):
         return self.bytes_recv_hist[0] - self.bytes_recv_hist[1]
@@ -39,19 +42,26 @@ class NetworkLink(object):
 
     # TODO: remove time interval hard codes
     def input_utilization(self):
-        return float(self.bytes_recv_delta()*8)/(8*self.capacity)
+        return float(self.bytes_recv_delta() * 8) / (8 * self.capacity)
 
     def output_utilization(self):
-        return float(self.bytes_sent_delta()*8)/(8*self.capacity)
+        return float(self.bytes_sent_delta() * 8) / (8 * self.capacity)
 
     def update(self, bytes_recv, bytes_sent):
         self.requests += 1
+        if bytes_recv < self.bytes_recv_hist[0]:
+            bytes_recv += 2 ** 32 + bytes_recv
+        if bytes_sent < self.bytes_sent_hist[0]:
+            bytes_sent += 2 ** 32 + bytes_sent
+
         self.bytes_recv_hist.appendleft(bytes_recv)
         self.bytes_sent_hist.appendleft(bytes_sent)
 
         if self.requests >= 2:
-            self.input_util_avg = self.input_util_avg + (self.input_utilization() - self.input_util_avg)/(self.requests-1)
-            self.output_util_avg = self.output_util_avg + (self.output_utilization() - self.output_util_avg)/(self.requests-1)
+            self.input_util_avg += (self.input_utilization() - self.input_util_avg) / (
+                self.requests - 1)
+            self.output_util_avg += (self.output_utilization() - self.output_util_avg) / (
+                self.requests - 1)
 
     def serialize(self):
         return {
