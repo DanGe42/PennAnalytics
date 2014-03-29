@@ -26,7 +26,7 @@ def manage():
     passkey = request.form['passkey']
     if passkey == config.creds['passkey']:
         # The "background" task will check for the presence of the 'runtask' file.
-        action = request.form['action']
+        action = request.form.get('action')
         if not action:
             message = "Running" if os.path.isfile(RUNFILE) else "Stopped"
         else:
