@@ -4,6 +4,8 @@
 
 import collections
 import config
+import math
+import time
 
 
 class NetworkLink(object):
@@ -71,10 +73,6 @@ class NetworkLink(object):
             "remote_sys_name": self.remote_sys_name,
             "capacity": self.capacity,
             "stats": {
-                "bytes_recv_hist": list(self.bytes_recv_hist),
-                "bytes_sent_hist": list(self.bytes_sent_hist),
-                "total_bytes_recv": self.bytes_recv,
-                "total_bytes_sent": self.bytes_sent,
                 "bytes_recv_last_interval": self.bytes_recv_delta(),
                 "bytes_sent_last_interval": self.bytes_sent_delta(),
                 "bytes_recv_moving_average": "%.3f" % self.input_util_avg,
@@ -120,9 +118,11 @@ class NetworkNode(dict):
     def total_bytes_sent_delta(self):
         return sum(link.bytes_sent_delta() for link in self.itervalues())
 
-    def serialize(self):
+    def serialize(self, timestamp=None):
+        timestamp = timestamp or int(math.floor(time.time()))
         return {
             "name": self.sys_name,
+            "timestamp": timestamp,
             "links": {port: link.serialize() for port, link in self.iteritems()}
         }
 

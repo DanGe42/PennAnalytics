@@ -184,4 +184,4 @@ if __name__ == '__main__':
         print('Must specify MIB_DIRECTORY environmental variable')
         sys.exit(1)
 
-    print(query(config.hosts, MIB_DIRECTORY))
+    print(suery(config.hosts, MIB_DIRECTORY))

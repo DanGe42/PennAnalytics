@@ -20,3 +20,7 @@ with open(_path_with_filename('snmp_vars.yaml'), 'r') as f:
     _vars = yaml.safe_load(f)
     snmp_walk_vars = _vars['walk']
     snmp_get_vars = _vars['get']
+
+# Expose passkey for management
+with open(_path_with_filename('creds.yaml'), 'r') as f:
+    creds = yaml.safe_load(f)['creds']

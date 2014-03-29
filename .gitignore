@@ -1,6 +1,7 @@
 ### Project specific ###
 data.txt
-config.yaml
+hosts.yaml
+creds.yaml
 
 
 ### OSX ###
@@ -9,7 +10,8 @@ config.yaml
 .LSOverride
 
 # Icon must ends with two \r.
-Icon
+Icon
+
 
 # Thumbnails
 ._*
