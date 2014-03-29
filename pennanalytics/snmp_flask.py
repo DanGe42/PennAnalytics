@@ -27,22 +27,25 @@ def manage():
     if passkey == config.creds['passkey']:
         # The "background" task will check for the presence of the 'runtask' file.
         action = request.form['action']
-        if action == 'stop':
-            if not os.path.isfile(RUNFILE):
-                message = "Failure (not running already)"
-            else:
-                os.remove(RUNFILE)
-                message = "Success" if not os.path.isfile(RUNFILE) else "Failure"
-
-        elif action == 'run':
-            if os.path.isfile(RUNFILE):
-                message = "Failure (already running)"
-            else:
-                open(RUNFILE, 'a').close()
-                message = "Success" if os.path.isfile(RUNFILE) else "Failure"
-
+        if not action:
+            message = "Running" if os.path.isfile(RUNFILE) else "Stopped"
         else:
-            message = "Invalid action"
+            if action == 'stop':
+                if not os.path.isfile(RUNFILE):
+                    message = "Failure (not running already)"
+                else:
+                    os.remove(RUNFILE)
+                    message = "Success" if not os.path.isfile(RUNFILE) else "Failure"
+
+            elif action == 'run':
+                if os.path.isfile(RUNFILE):
+                    message = "Failure (already running)"
+                else:
+                    open(RUNFILE, 'a').close()
+                    message = "Success" if os.path.isfile(RUNFILE) else "Failure"
+
+            else:
+                message = "Invalid action"
     else:
         message = "Invalid passkey"
 
