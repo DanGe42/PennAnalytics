@@ -12,7 +12,7 @@ print("Starting SNMP interval task; interval set to %d seconds" % interval)
 filename = "output.json"
 tmp_filename = "output.json.1"
 print("Using output file %s." % filename)
-mib_directory = os.environ.get("MIB_DIRECTORY")
+mib_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'snmp')
 print("MIB_DIRECTORY=%s" % mib_directory)
 
 
