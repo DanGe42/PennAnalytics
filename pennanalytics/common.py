@@ -95,7 +95,7 @@ class NetworkNode(dict):
         return self._sys_name
 
     def __repr__(self):
-        return "NetworkNode('%s', %s)" % (self.sys_name, super(NetworkNode, self).__str__())
+        return "NetworkNode('%s', %s)" % (self.sys_name, super(NetworkNode, self).__repr__())
 
     def add_remote(self, port, remote_sys_name, capacity):
         self[port] = NetworkLink(remote_sys_name, capacity, 0, 0)
@@ -125,17 +125,3 @@ class NetworkNode(dict):
             "timestamp": timestamp,
             "links": {port: link.serialize() for port, link in self.iteritems()}
         }
-
-
-if __name__ == "__main__":
-    n = NetworkNode("hub")
-
-    n.add_remote(1, "sys1", 100)
-    n.update_remote(1, 10, 10)
-    n.update_remote(1, 20, 20)
-    n.update_remote(1, 40, 40)
-    n.update_remote(1, 70, 70)
-
-    print n[1].requests
-    print n[1].input_util_avg
-    print n[1].output_util_avg
