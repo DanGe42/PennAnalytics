@@ -19,7 +19,7 @@ class NetworkLink(object):
         self.bytes_sent_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
         self.bytes_recv_hist.appendleft(bytes_recv)
         self.bytes_sent_hist.appendleft(bytes_sent)
-        self.requests = 0
+        self.requests = 1
         self.input_util_avg = 0.0
         self.output_util_avg = 0.0
 
