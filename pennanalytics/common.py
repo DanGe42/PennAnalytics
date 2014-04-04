@@ -7,7 +7,6 @@ import config
 import math
 import time
 
-
 class NetworkLink(object):
 
     MAX_QUEUE_LENGTH = 2
@@ -17,8 +16,14 @@ class NetworkLink(object):
         self.capacity = capacity
         self.bytes_recv_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
         self.bytes_sent_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
+        self.bytes_recv_switch_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
+        self.bytes_sent_switch_hist = collections.deque(maxlen=NetworkLink.MAX_QUEUE_LENGTH)
         self.bytes_recv_hist.appendleft(bytes_recv)
         self.bytes_sent_hist.appendleft(bytes_sent)
+        self.bytes_recv_switch_hist.appendleft(bytes_recv)
+        self.bytes_sent_switch_hist.appendleft(bytes_sent)
+        self.bytes_recv_rollovers = 0
+        self.bytes_sent_rollovers = 0
         self.requests = 1
         self.input_util_avg = 0.0
         self.output_util_avg = 0.0
@@ -45,7 +50,6 @@ class NetworkLink(object):
     def bytes_sent_delta(self):
         return self.bytes_sent_hist[0] - self.bytes_sent_hist[1]
 
-    # TODO: remove time interval hard codes
     def input_utilization(self):
         return float(self.bytes_recv_delta() * 8) / (config.query_interval_seconds * self.capacity)
 
@@ -54,11 +58,16 @@ class NetworkLink(object):
 
     def update(self, bytes_recv, bytes_sent):
         self.requests += 1
-        if bytes_recv < self.bytes_recv_hist[0]:
-            bytes_recv += 2 ** 32 + bytes_recv
-        if bytes_sent < self.bytes_sent_hist[0]:
-            bytes_sent += 2 ** 32 + bytes_sent
+        self.bytes_recv_switch_hist.appendleft(bytes_recv)
+        self.bytes_sent_switch_hist.appendleft(bytes_sent)
 
+        if self.bytes_recv_switch_hist[0] < self.bytes_recv_switch_hist[1]:
+            self.bytes_recv_rollovers += 1
+        if self.bytes_sent_switch_hist[0] < self.bytes_sent_switch_hist[1]:
+            self.bytes_sent_rollovers += 1
+
+        bytes_recv += (2 ** 32) * self.bytes_recv_rollovers
+        bytes_sent += (2 ** 32) * self.bytes_sent_rollovers
         self.bytes_recv_hist.appendleft(bytes_recv)
         self.bytes_sent_hist.appendleft(bytes_sent)
 
